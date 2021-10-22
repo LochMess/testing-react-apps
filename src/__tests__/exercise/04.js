@@ -5,12 +5,13 @@ import * as React from 'react'
 import {render, screen} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Login from '../../components/login'
-import faker from 'faker'
+import {build, fake} from '@jackfranklin/test-data-bot'
 
-const buildLoginForm = overrides => ({
-  username: faker.internet.userName(),
-  password: faker.internet.password(),
-  ...overrides,
+const loginFormBuilder = build({
+  fields: {
+    username: fake(faker => faker.internet.userName()),
+    password: fake(faker => faker.internet.password()),
+  },
 })
 
 test('submitting the form calls onSubmit with username and password', () => {
@@ -22,7 +23,10 @@ test('submitting the form calls onSubmit with username and password', () => {
   // 🐨 render the login with your handleSubmit function as the onSubmit prop
   render(<Login onSubmit={handleSubmit} />)
   // 🐨 get the username and password fields via `getByLabelText`
-  const {username, password} = buildLoginForm({username: 'example'})
+  const {username, password} = loginFormBuilder({
+    overrides: {username: 'example'},
+  })
+
   userEvent.type(screen.getByLabelText(/username/i), username)
   userEvent.type(screen.getByLabelText(/password/i), password)
   const submitButton = screen.getByRole('button', {name: /submit/i})
