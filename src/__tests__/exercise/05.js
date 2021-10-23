@@ -63,3 +63,38 @@ test(`log in attempt without username`, async () => {
 
   expect(screen.getByRole('alert')).toHaveTextContent(/username required/i)
 })
+
+test(`log in attempt without username assert with toMatchInlineSnapshot`, async () => {
+  render(<Login />)
+  const {password} = buildLoginForm()
+
+  userEvent.type(screen.getByLabelText(/password/i), password)
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+
+  expect(screen.getByRole('alert').textContent).toMatchInlineSnapshot(
+    `"username required"`,
+  )
+})
+
+test(`server has an internal 500 error`, async () => {
+  const errorResponseMessage = 'Server on 🔥 please try again later'
+  server.use(
+    rest.post(
+      'https://auth-provider.example.com/api/login',
+      async (req, res, ctx) => {
+        return res(ctx.status(500), ctx.json({message: errorResponseMessage}))
+      },
+    ),
+  )
+  render(<Login />)
+  const {username, password} = buildLoginForm()
+
+  userEvent.type(screen.getByLabelText(/username/i), username)
+  userEvent.type(screen.getByLabelText(/password/i), password)
+  userEvent.click(screen.getByRole('button', {name: /submit/i}))
+
+  await waitForElementToBeRemoved(() => screen.getByLabelText(/loading/i))
+  expect(screen.getByRole('alert').textContent).toBe(errorResponseMessage)
+})
